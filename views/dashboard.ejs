@@ -1,0 +1,222 @@
+<%- include('partials/header') %>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">OVERVIEW</p>
+        <h1>Training Dashboard</h1>
+        <p class="subtitle">Your enterprise learning and development performance overview.</p>
+    </div>
+    <div class="user-avatar" title="<%= user_id %>"><%= (user_id || 'A')[0].toUpperCase() %></div>
+</header>
+
+<section class="welcome-banner">
+    <div>
+        <span class="banner-badge">ENTERPRISE L&D</span>
+        <h2>Build skills. Grow together.</h2>
+        <p>Monitor department training programs, employee participation, and schedules from a single workspace.</p>
+    </div>
+    <div class="banner-symbol">✦</div>
+</section>
+
+<!-- High-level KPI Statistics -->
+<section class="stats-grid">
+    <article class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Total Trainings</span>
+            <span class="stat-icon steel">▤</span>
+        </div>
+        <h2><%= stats.total %></h2>
+        <p>All registered training programs</p>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Active Trainings</span>
+            <span class="stat-icon green">↗</span>
+        </div>
+        <h2><%= stats.active %></h2>
+        <p>Currently running programs</p>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Completed / Closed</span>
+            <span class="stat-icon purple">✓</span>
+        </div>
+        <h2><%= stats.completed %></h2>
+        <p>Finished or archived programs</p>
+    </article>
+</section>
+
+<!-- Department-wise Training Overview -->
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">DEPARTMENT BREAKDOWN</p>
+            <h2>Department-wise Training Overview</h2>
+            <p class="subtitle">Distribution and volume of training programs across business units.</p>
+        </div>
+        <% if (department_stats && department_stats.length > 0) { %>
+        <div class="dept-summary-pill">
+            <span class="pill-dot"></span>
+            <span><%= department_stats.length %> Department<%= department_stats.length !== 1 ? 's' : '' %> Active</span>
+        </div>
+        <% } %>
+    </div>
+
+    <% if (department_stats && department_stats.length > 0) { %>
+    <div class="dept-grid">
+        <% department_stats.forEach(function(dept) { %>
+        <% const pct = stats.total > 0 ? Math.round((dept.count / stats.total) * 100) : 0; %>
+        <article class="dept-card">
+            <div class="dept-card-header">
+                <div>
+                    <span class="dept-tag">Department</span>
+                    <h3 class="dept-title"><%= dept.department %></h3>
+                </div>
+                <div class="dept-count-badge">
+                    <span class="dept-count-num"><%= dept.count %></span>
+                    <span class="dept-count-unit">program<%= dept.count !== 1 ? 's' : '' %></span>
+                </div>
+            </div>
+
+            <div class="dept-progress-wrap">
+                <div class="dept-progress-bar">
+                    <div class="dept-progress-fill" style="width: <%= pct %>%;"></div>
+                </div>
+                <div class="dept-progress-meta">
+                    <span>Share of total programs</span>
+                    <strong><%= pct %>%</strong>
+                </div>
+            </div>
+        </article>
+        <% }); %>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+        <div class="empty-icon">▤</div>
+        <h3>No Department Data Available</h3>
+        <p>There are no training programs assigned to departments yet. Add training programs to see the departmental distribution.</p>
+        <a href="/trainings" class="action-button empty-action">Add First Training Program</a>
+    </div>
+    <% } %>
+</section>
+
+<!-- Recent Training Activity -->
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">RECENT ACTIVITY</p>
+            <h2>Recent Training Activity</h2>
+            <p class="subtitle">Your latest corporate learning programs and course outlines.</p>
+        </div>
+        <a class="view-all-link" href="/trainings">View all trainings →</a>
+    </div>
+
+    <% if (trainings && trainings.length > 0) { %>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Training Name</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                    <th style="text-align: right;">Curriculum</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% trainings.slice(0, 5).forEach(function(training) { %>
+                <tr>
+                    <td><strong><%= training.training_name %></strong></td>
+                    <td><%= training.department %></td>
+                    <td>
+                        <span class="status-pill <%= training.status.toLowerCase() %>">
+                            <%= training.status %>
+                        </span>
+                    </td>
+                    <td><%= training.created_at_formatted || training.created_at || '-' %></td>
+                    <td style="text-align: right;">
+                        <button type="button" class="view-all-link" onclick="openCurriculumModal(<%= training.id %>, '<%= training.training_name.replace(/'/g, "\\'") %>', '<%= training.department %>')">
+                            View Syllabus ↗
+                        </button>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+        <div class="empty-icon">▤</div>
+        <h3>No training programs yet</h3>
+        <p>Get started by creating your first training program.</p>
+        <a href="/trainings" class="action-button empty-action">Create Program</a>
+    </div>
+    <% } %>
+</section>
+
+<!-- Quick Access Shortcuts -->
+<section class="content-panel">
+    <p class="eyebrow">QUICK ACCESS</p>
+    <h2>Manage your workspace</h2>
+    <p class="subtitle">Direct shortcuts to primary administrative sections.</p>
+
+    <div class="quick-links">
+        <a class="quick-link" href="/trainings">
+            <span class="stat-icon steel">▤</span>
+            <span>
+                <strong>Training Programs</strong>
+                <small>Create, manage and organize training programs</small>
+            </span>
+            <span class="arrow">→</span>
+        </a>
+
+        <a class="quick-link" href="/employees">
+            <span class="stat-icon steel">♙</span>
+            <span>
+                <strong>Employees</strong>
+                <small>Manage employee directory and department profiles</small>
+            </span>
+            <span class="arrow">→</span>
+        </a>
+
+        <a class="quick-link" href="/trainers">
+            <span class="stat-icon steel">♟</span>
+            <span>
+                <strong>Trainers</strong>
+                <small>Manage instructors, expertise and contact info</small>
+            </span>
+            <span class="arrow">→</span>
+        </a>
+
+        <a class="quick-link" href="/broadcast">
+            <span class="stat-icon orange">▣</span>
+            <span>
+                <strong>Schedule Broadcast</strong>
+                <small>Schedule training sessions and assign employees</small>
+            </span>
+            <span class="arrow">→</span>
+        </a>
+
+        <a class="quick-link" href="/feedback">
+            <span class="stat-icon orange">☆</span>
+            <span>
+                <strong>Feedback & Quality</strong>
+                <small>Review ratings, attendee comments and sentiment</small>
+            </span>
+            <span class="arrow">→</span>
+        </a>
+
+        <a class="quick-link" href="/settings">
+            <span class="stat-icon steel">⚙</span>
+            <span>
+                <strong>Settings & Diagnostics</strong>
+                <small>Configure preferences, theme, and view system status</small>
+            </span>
+            <span class="arrow">→</span>
+        </a>
+    </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'TrainingHub — Enterprise Learning & Development' %></title>
+    <meta name="description" content="Enterprise employee training management, scheduling, and learning analytics platform.">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        // Synchronous theme initialization (Light Mode default) to eliminate FOUC flash
+        (function() {
+            var theme = localStorage.getItem('th_theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+            } else {
+                document.documentElement.classList.remove('dark-theme');
+            }
+        })();
+    </script>
+</head>
+<body class="dashboard-page">
+    <!-- Top Global Progress Bar for Zero-Flicker SPA Navigation -->
+    <div id="globalProgressBar" class="global-progress-bar"></div>
+
+    <!-- Mobile Hamburger Toggle -->
+    <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="appSidebar">
+        <div class="sidebar-brand">
+            <span class="brand-badge">TH</span>
+            <div class="brand-text">
+                <strong>TrainingHub</strong>
+                <small>Enterprise L&D</small>
+            </div>
+        </div>
+
+        <p class="nav-heading">WORKSPACE</p>
+
+        <a class="nav-link <%= (typeof active_page !== 'undefined' && active_page === 'dashboard') ? 'selected' : '' %>"
+           href="/dashboard">
+            <span class="nav-icon">▦</span>
+            <span>Dashboard</span>
+        </a>
+
+        <a class="nav-link <%= (typeof active_page !== 'undefined' && active_page === 'employees') ? 'selected' : '' %>"
+           href="/employees">
+            <span class="nav-icon">♙</span>
+            <span>Employees</span>
+        </a>
+
+        <a class="nav-link <%= (typeof active_page !== 'undefined' && active_page === 'trainings') ? 'selected' : '' %>"
+           href="/trainings">
+            <span class="nav-icon">▤</span>
+            <span>Trainings</span>
+        </a>
+
+        <a class="nav-link <%= (typeof active_page !== 'undefined' && active_page === 'trainers') ? 'selected' : '' %>"
+           href="/trainers">
+            <span class="nav-icon">♟</span>
+            <span>Trainers</span>
+        </a>
+
+        <p class="nav-heading">LEARNING & DELIVERY</p>
+
+        <a class="nav-link <%= (typeof active_page !== 'undefined' && active_page === 'broadcast') ? 'selected' : '' %>"
+           href="/broadcast">
+            <span class="nav-icon">▣</span>
+            <span>Broadcast Sessions</span>
+        </a>
+
+        <a class="nav-link <%= (typeof active_page !== 'undefined' && active_page === 'feedback') ? 'selected' : '' %>"
+           href="/feedback">
+            <span class="nav-icon">☆</span>
+            <span>Feedback</span>
+        </a>
+
+        <a class="nav-link <%= (typeof active_page !== 'undefined' && active_page === 'reports') ? 'selected' : '' %>"
+           href="/reports">
+            <span class="nav-icon">▧</span>
+            <span>Reports & Exports</span>
+        </a>
+
+        <p class="nav-heading">SYSTEM</p>
+
+        <a class="nav-link <%= (typeof active_page !== 'undefined' && active_page === 'settings') ? 'selected' : '' %>"
+           href="/settings">
+            <span class="nav-icon">⚙</span>
+            <span>Settings</span>
+        </a>
+
+        <div class="sidebar-bottom">
+            <div class="user-profile-badge">
+                <div class="sidebar-user-avatar"><%= (typeof user_id !== 'undefined' && user_id ? user_id[0].toUpperCase() : 'A') %></div>
+                <div class="user-meta">
+                    <span class="user-role-tag"><%= (typeof current_user !== 'undefined' && current_user && current_user.role === 'trainer') ? 'Lead Trainer' : ((typeof current_user !== 'undefined' && current_user && current_user.role === 'employee') ? 'Employee' : 'HR Administrator') %></span>
+                    <strong><%= typeof user_id !== 'undefined' ? user_id : 'admin' %></strong>
+                </div>
+            </div>
+            <a class="logout-link" href="/logout">Sign Out ↗</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <!-- Enterprise Top Navigation Bar -->
+        <nav class="app-global-nav" aria-label="Global Controls">
+            <div class="nav-left-tag">
+                <span class="live-status-dot"></span>
+                <span class="env-pill"><%= (typeof db_status !== 'undefined' && db_status.mode === 'MySQL') ? 'MySQL Connected' : 'Local High-Speed Demo Mode' %></span>
+            </div>
+
+            <div class="topbar-right-controls">
+                <!-- Apple-inspired Animated Theme Switcher Button -->
+                <button class="theme-switch-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
+                    <span class="theme-icon-orb" id="themeIconOrb">☀️</span>
+                    <span id="themeTextLabel">Light</span>
+                </button>
+
+                <!-- Notifications Center -->
+                <div class="notif-container">
+                    <button class="topbar-btn" id="notifBellBtn" title="Notifications" aria-label="View notifications">
+                        <span>🔔</span>
+                        <span class="badge-unread" id="notifBadge" style="<%= (typeof unread_notifs_count !== 'undefined' && unread_notifs_count > 0) ? '' : 'display: none;' %>">
+                            <%= typeof unread_notifs_count !== 'undefined' ? unread_notifs_count : '3' %>
+                        </span>
+                    </button>
+
+                    <div class="notif-menu" id="notifMenu">
+                        <div class="notif-header">
+                            <h4>Notifications</h4>
+                            <div class="notif-actions-top">
+                                <button type="button" class="notif-link-btn" id="markAllReadBtn">Mark read</button>
+                                <button type="button" class="notif-link-btn" id="clearAllNotifsBtn">Clear</button>
+                            </div>
+                        </div>
+                        <ul class="notif-list" id="notifList">
+                            <!-- Populated dynamically via JS from /api/notifications -->
+                            <li class="notif-item unread">
+                                <div class="notif-icon">▣</div>
+                                <div class="notif-content">
+                                    <div class="notif-title">Upcoming Broadcast Session</div>
+                                    <div class="notif-desc">Advanced Financial Modeling starts tomorrow with Michael Scott.</div>
+                                    <div class="notif-time">Just now</div>
+                                </div>
+                            </li>
+                            <li class="notif-item unread">
+                                <div class="notif-icon">☆</div>
+                                <div class="notif-content">
+                                    <div class="notif-title">New Feedback Received</div>
+                                    <div class="notif-desc">Sarah Jenkins rated session 5/5 stars with positive remarks.</div>
+                                    <div class="notif-time">1 hour ago</div>
+                                </div>
+                            </li>
+                            <li class="notif-item">
+                                <div class="notif-icon">♙</div>
+                                <div class="notif-content">
+                                    <div class="notif-title">Employee Onboarded</div>
+                                    <div class="notif-desc">Liam O'Connor added to Human Resources department.</div>
+                                    <div class="notif-time">Yesterday</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Settings shortcut -->
+                <a class="topbar-btn" href="/settings" title="Workspace Settings" aria-label="Workspace Settings">
+                    <span>⚙</span>
+                </a>
+            </div>
+        </nav>
+
+        <% if (typeof messages !== 'undefined' && messages && messages.length > 0) { %>
+            <div class="flash-container">
+                <% messages.forEach(function(msg) { %>
+                    <div class="alert <%= msg.category %>"><%= msg.message %></div>
+                <% }); %>
+            </div>
+        <% } %>
+
+        <!-- Instant Page Content Viewport with Zero-Flicker Transitions -->
+        <div id="pageContentArea" class="page-content-area">

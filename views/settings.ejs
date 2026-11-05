@@ -1,0 +1,222 @@
+<%- include('partials/header') %>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">SYSTEM & CONFIGURATION</p>
+        <h1>Settings & Workspace</h1>
+        <p class="subtitle">Manage your account profile, workspace preferences, and database diagnostics.</p>
+    </div>
+    <div class="user-avatar"><%= (user_id || 'A')[0].toUpperCase() %></div>
+</header>
+
+<div class="settings-tabs">
+    <button type="button" class="settings-tab-btn active" onclick="switchSettingsTab('profile', this)">User Profile</button>
+    <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('security', this)">Security & Password</button>
+    <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('appearance', this)">Appearance & Theme</button>
+    <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('diagnostics', this)">Database & Diagnostics</button>
+</div>
+
+<!-- TAB 1: User Profile -->
+<div class="settings-tab-pane" id="tab_profile">
+    <section class="content-panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">ACCOUNT INFORMATION</p>
+                <h2>Personal Details</h2>
+                <p class="subtitle">Update your full name, email address, and department affiliation.</p>
+            </div>
+            <span class="stat-icon steel">♙</span>
+        </div>
+
+        <form action="/settings/profile" method="POST">
+            <label for="username_disp">User ID / Username</label>
+            <input id="username_disp" type="text" value="<%= user_id %>" disabled style="background:var(--soft-bg); cursor:not-allowed;">
+
+            <label for="full_name">Full Name</label>
+            <input id="full_name" name="full_name" type="text" maxlength="120" value="<%= current_user?.full_name || '' %>" required>
+
+            <label for="email">Email Address</label>
+            <input id="email" name="email" type="email" maxlength="150" value="<%= current_user?.email || '' %>" placeholder="user@company.com">
+
+            <label for="department">Department</label>
+            <select id="department" name="department" required>
+                <% const depts = ['Finance', 'Marketing', 'Sales', 'Human Resources', 'Information Technology', 'Operations']; %>
+                <% depts.forEach(function(d) { %>
+                    <option value="<%= d %>" <%= current_user?.department === d ? 'selected' : '' %>><%= d %></option>
+                <% }); %>
+            </select>
+
+            <button type="submit">Update Profile <span>✓</span></button>
+        </form>
+    </section>
+</div>
+
+<!-- TAB 2: Security & Password -->
+<div class="settings-tab-pane" id="tab_security" style="display: none;">
+    <section class="content-panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">AUTHENTICATION & SECURITY</p>
+                <h2>Change Password</h2>
+                <p class="subtitle">Ensure your account uses a secure password (minimum 6 characters).</p>
+            </div>
+            <span class="stat-icon green">✓</span>
+        </div>
+
+        <form action="/settings/password" method="POST">
+            <label for="current_password">Current Password</label>
+            <input id="current_password" name="current_password" type="password" placeholder="Enter current password" required>
+
+            <label for="new_password">New Password</label>
+            <input id="new_password" name="new_password" type="password" minlength="6" placeholder="Enter new password (min. 6 chars)" required>
+
+            <label for="confirm_password">Confirm New Password</label>
+            <input id="confirm_password" name="confirm_password" type="password" minlength="6" placeholder="Repeat new password" required>
+
+            <button type="submit">Update Password <span>→</span></button>
+        </form>
+    </section>
+</div>
+
+<!-- TAB 3: Appearance & Theme -->
+<div class="settings-tab-pane" id="tab_appearance" style="display: none;">
+    <section class="content-panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">DISPLAY PREFERENCES</p>
+                <h2>Interface Theme</h2>
+                <p class="subtitle">Choose between the crisp enterprise light theme and the sleek dark theme.</p>
+            </div>
+            <span class="stat-icon orange">☀</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 18px;">
+            <div class="dept-card" onclick="setAppTheme('light')" style="cursor: pointer; border: 2px solid var(--steel-border);" id="cardThemeLight">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <strong style="font-size: 15px;">☀️ Enterprise Light</strong>
+                    <span class="status-pill active" id="badgeThemeLight">Active</span>
+                </div>
+                <p style="font-size: 12px; color: var(--cool-steel); margin: 0;">Clean, high-contrast palette tailored for daytime analytics and clear report presentation.</p>
+            </div>
+
+            <div class="dept-card" onclick="setAppTheme('dark')" style="cursor: pointer; border: 2px solid var(--steel-border);" id="cardThemeDark">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <strong style="font-size: 15px;">🌙 Midnight Charcoal (Dark)</strong>
+                    <span class="status-pill inactive" id="badgeThemeDark">Inactive</span>
+                </div>
+                <p style="font-size: 12px; color: var(--cool-steel); margin: 0;">Sleek low-light aesthetic designed to reduce eye strain during extended management sessions.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- TAB 4: Database & System Diagnostics -->
+<div class="settings-tab-pane" id="tab_diagnostics" style="display: none;">
+    <section class="content-panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">INFRASTRUCTURE TELEMETRY</p>
+                <h2>System & Database Diagnostics</h2>
+                <p class="subtitle">Real-time status of backend services, database connections, and environment configuration.</p>
+            </div>
+            <span class="stat-icon blue">⚙</span>
+        </div>
+
+        <div class="stats-grid">
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Database Mode</span>
+                    <span class="status-indicator-dot <%= db_status?.mode === 'MySQL' ? 'online' : 'demo' %>"></span>
+                </div>
+                <h2 style="font-size: 22px;"><%= db_status?.mode || 'Demo Store' %></h2>
+                <p><%= db_status?.mode === 'MySQL' ? 'Connected to live MySQL database' : 'High-Speed In-Memory Mock (Zero Setup)' %></p>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Active Port & Host</span>
+                    <span class="stat-icon steel">0.0.0.0</span>
+                </div>
+                <h2 style="font-size: 22px;">Port 3000</h2>
+                <p>Bound to all network interfaces</p>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Runtime Engine</span>
+                    <span class="stat-icon green">Node</span>
+                </div>
+                <h2 style="font-size: 22px;">Node.js 22</h2>
+                <p>Express 4.21 + EJS + TypeScript tsx</p>
+            </article>
+        </div>
+
+        <div style="padding: 18px 20px; background: var(--soft-bg); border-radius: 10px; border: 1px solid var(--steel-border); margin-top: 14px;">
+            <h4 style="margin: 0 0 8px; font-size: 14px;">Environment Variables Health Check</h4>
+            <div style="font-family: monospace; font-size: 12px; line-height: 1.8;">
+                <div>SESSION_SECRET: <span style="color: #10B981;">✓ Configured</span></div>
+                <div>FLASK_SECRET_KEY fallback: <span style="color: #10B981;">✓ Supported</span></div>
+                <div>DB_HOST: <span style="color: var(--cool-steel);"><%= db_status?.host || 'localhost' %></span></div>
+                <div>DB_NAME: <span style="color: var(--cool-steel);"><%= db_status?.database || 'training_hub_db' %></span></div>
+                <div>AI ASSISTANT: <span style="color: #10B981;">✓ Online (Grounded Local Model + Gemini Optional)</span></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    function switchSettingsTab(tabName, btn) {
+        document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.settings-tab-pane').forEach(p => p.style.display = 'none');
+
+        btn.classList.add('active');
+        const target = document.getElementById('tab_' + tabName);
+        if (target) target.style.display = 'block';
+    }
+
+    function setAppTheme(theme) {
+        if (typeof applyTheme === 'function') {
+            applyTheme(theme);
+        } else {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+                document.body.classList.add('dark-theme');
+                localStorage.setItem('th_theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark-theme');
+                document.body.classList.remove('dark-theme');
+                localStorage.setItem('th_theme', 'light');
+            }
+        }
+        updateThemeBadges();
+    }
+
+    function updateThemeBadges() {
+        const isDark = document.body.classList.contains('dark-theme');
+        const bLight = document.getElementById('badgeThemeLight');
+        const bDark = document.getElementById('badgeThemeDark');
+        const cLight = document.getElementById('cardThemeLight');
+        const cDark = document.getElementById('cardThemeDark');
+
+        if (bLight && bDark) {
+            if (isDark) {
+                bLight.className = 'status-pill inactive';
+                bLight.textContent = 'Inactive';
+                bDark.className = 'status-pill active';
+                bDark.textContent = 'Active';
+                if (cDark) cDark.style.borderColor = 'var(--vibrant-orange)';
+                if (cLight) cLight.style.borderColor = 'var(--steel-border)';
+            } else {
+                bLight.className = 'status-pill active';
+                bLight.textContent = 'Active';
+                bDark.className = 'status-pill inactive';
+                bDark.textContent = 'Inactive';
+                if (cLight) cLight.style.borderColor = 'var(--vibrant-orange)';
+                if (cDark) cDark.style.borderColor = 'var(--steel-border)';
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', updateThemeBadges);
+</script>
+
+<%- include('partials/footer') %>

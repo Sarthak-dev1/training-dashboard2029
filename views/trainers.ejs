@@ -1,0 +1,157 @@
+<%- include('partials/header') %>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">WORKSPACE & INSTRUCTORS</p>
+        <h1>Trainer Management</h1>
+        <p class="subtitle">Manage trainers, their areas of expertise, and contact channels.</p>
+    </div>
+    <div class="user-avatar"><%= (user_id || 'A')[0].toUpperCase() %></div>
+</header>
+
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">TRAINER DIRECTORY</p>
+            <h2>Add a Trainer</h2>
+            <p class="subtitle">Save trainer information for future training programs. A trainer login account is created automatically.</p>
+        </div>
+        <span class="stat-icon blue">♙</span>
+    </div>
+
+    <form action="/add-trainer" method="POST" class="data-form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="trainer_name">Trainer Name</label>
+                <input
+                    type="text"
+                    id="trainer_name"
+                    name="trainer_name"
+                    maxlength="120"
+                    placeholder="Enter trainer's full name"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="specialization">Specialization</label>
+                <input
+                    type="text"
+                    id="specialization"
+                    name="specialization"
+                    maxlength="150"
+                    placeholder="e.g. Leadership, Python, Cloud Security"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    maxlength="150"
+                    placeholder="trainer@example.com"
+                >
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="action-button">+ Add Trainer</button>
+        </div>
+    </form>
+</section>
+
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">RECORDS</p>
+            <h2>All Trainers</h2>
+            <p class="subtitle">Total registered trainers: <%= trainer_count %></p>
+        </div>
+        <span class="item-count-badge" id="trainerTable_count">Showing <%= trainers.length %> trainers</span>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="filter-toolbar">
+        <div class="filter-group">
+            <div class="search-input-box">
+                <span class="search-icon-symbol">🔍</span>
+                <input type="text" id="trainerSearch" placeholder="Search by trainer name or specialization..." oninput="filterTrainers()">
+            </div>
+        </div>
+
+        <button type="button" class="notif-link-btn" onclick="resetTrainerFilters()">Reset Search</button>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table" id="trainerTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Trainer Name</th>
+                    <th>Specialization</th>
+                    <th>Email Address</th>
+                    <th>Date Added</th>
+                    <th style="text-align: right;">Profile</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (trainers && trainers.length > 0) { %>
+                    <% trainers.forEach(function(trainer, index) { %>
+                    <tr>
+                        <td><%= index + 1 %></td>
+                        <td><strong><%= trainer.trainer_name %></strong></td>
+                        <td><span class="status-pill active"><%= trainer.specialization || 'General Training' %></span></td>
+                        <td><%= trainer.email || '—' %></td>
+                        <td><%= trainer.created_at_formatted || trainer.created_at || '—' %></td>
+                        <td style="text-align: right;">
+                            <button type="button" class="view-all-link" onclick="openTrainerModal(<%= trainer.id %>, '<%= trainer.trainer_name.replace(/'/g, "\\'") %>', '<%= (trainer.specialization || '').replace(/'/g, "\\'") %>', '<%= (trainer.email || '').replace(/'/g, "\\'") %>')">
+                                View Profile ↗
+                            </button>
+                        </td>
+                    </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr class="empty-row">
+                        <td colspan="6" class="empty-state">
+                            No trainers added yet. Use the form above to add your first trainer.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script>
+    function filterTrainers() {
+        const q = (document.getElementById('trainerSearch')?.value || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('#trainerTable tbody tr');
+        let count = 0;
+
+        rows.forEach(row => {
+            if (row.classList.contains('empty-row')) return;
+            const nameText = row.children[1]?.textContent.toLowerCase() || '';
+            const specText = row.children[2]?.textContent.toLowerCase() || '';
+            const emailText = row.children[3]?.textContent.toLowerCase() || '';
+
+            if (!q || nameText.includes(q) || specText.includes(q) || emailText.includes(q)) {
+                row.style.display = '';
+                count++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const badge = document.getElementById('trainerTable_count');
+        if (badge) badge.textContent = 'Showing ' + count + ' trainer' + (count !== 1 ? 's' : '');
+    }
+
+    function resetTrainerFilters() {
+        if (document.getElementById('trainerSearch')) document.getElementById('trainerSearch').value = '';
+        filterTrainers();
+    }
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,110 @@
+<%- include('partials/header') %>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">EXECUTIVE ANALYTICS & INSIGHTS</p>
+        <h1>Training Reports & Data Exports</h1>
+        <p class="subtitle">
+            Audit organizational learning velocity, program completion metrics, and export compliance-grade reports.
+        </p>
+    </div>
+
+    <div class="user-avatar"><%= (user_id || 'A')[0].toUpperCase() %></div>
+</header>
+
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">REPORTING CENTRE</p>
+            <h2>Executive Learning Overview</h2>
+            <p class="subtitle">
+                High-level KPI metrics computed from live database records.
+            </p>
+        </div>
+
+        <div class="report-actions">
+            <a href="/export-reports" class="action-button">
+                <span>📊</span> Download Excel Report (.xlsx)
+            </a>
+
+            <a href="/export-pdf-reports" class="action-button">
+                <span>📄</span> Download PDF Report (.pdf)
+            </a>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Training Programs</span>
+                <span class="stat-icon steel">▤</span>
+            </div>
+            <h2><%= total_trainings %></h2>
+            <p>Courses across all 6 departments</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Enrolled Employees</span>
+                <span class="stat-icon green">♙</span>
+            </div>
+            <h2><%= total_employees %></h2>
+            <p>Active corporate staff directory</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Scheduled Broadcasts</span>
+                <span class="stat-icon purple">▣</span>
+            </div>
+            <h2><%= total_sessions %></h2>
+            <p>Instructor-led group sessions</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Feedback Submissions</span>
+                <span class="stat-icon orange">☆</span>
+            </div>
+            <h2><%= total_feedback %></h2>
+            <p>Quality evaluations submitted</p>
+        </div>
+    </div>
+
+    <!-- Export Dossier Overview Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-top: 24px;">
+        <div style="padding: 22px; background: var(--soft-bg); border: 1px solid var(--steel-border); border-radius: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <span style="font-size: 24px;">📗</span>
+                <div>
+                    <h3 style="font-size: 15px; margin: 0;">Comprehensive Excel Workbook</h3>
+                    <small style="color: var(--cool-steel);">Formatted .xlsx with 6 auto-filtered tabs</small>
+                </div>
+            </div>
+            <p style="font-size: 12px; line-height: 1.6; color: var(--cool-steel); margin-bottom: 16px;">
+                Includes individual styled worksheets: <strong>Summary</strong>, <strong>Trainings</strong>, <strong>Employees</strong>, <strong>Trainers</strong>, <strong>Sessions</strong>, and <strong>Feedback</strong> with frozen header panes and corporate color branding.
+            </p>
+            <a href="/export-reports" class="action-button" style="width: 100%; text-align: center;">
+                Generate & Export Excel ↗
+            </a>
+        </div>
+
+        <div style="padding: 22px; background: var(--soft-bg); border: 1px solid var(--steel-border); border-radius: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <span style="font-size: 24px;">📕</span>
+                <div>
+                    <h3 style="font-size: 15px; margin: 0;">Executive Landscape PDF Brief</h3>
+                    <small style="color: var(--cool-steel);">Print-ready A4 document</small>
+                </div>
+            </div>
+            <p style="font-size: 12px; line-height: 1.6; color: var(--cool-steel); margin-bottom: 16px;">
+                Includes executive summary table, program catalogs, instructor assignments, employee rosters, and satisfaction telemetry with clean tabular pagination and compliance footers.
+            </p>
+            <a href="/export-pdf-reports" class="action-button" style="width: 100%; text-align: center;">
+                Generate & Export PDF ↗
+            </a>
+        </div>
+    </div>
+</section>
+
+<%- include('partials/footer') %>

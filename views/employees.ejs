@@ -1,0 +1,153 @@
+<%- include('partials/header') %>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">PEOPLE MANAGEMENT</p>
+        <h1>Employees</h1>
+        <p class="subtitle">Manage employee directory, departmental assignments, and login profiles.</p>
+    </div>
+    <div class="user-avatar"><%= (user_id || 'A')[0].toUpperCase() %></div>
+</header>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Total Employees</span>
+            <span class="stat-icon blue">♙</span>
+        </div>
+        <h2><%= employee_count %></h2>
+        <p>Employees registered in the system</p>
+    </article>
+</section>
+
+<section class="content-panel">
+    <p class="eyebrow">PEOPLE MANAGEMENT</p>
+    <h2>Add an employee</h2>
+    <p class="subtitle">Enter the employee's details below. An automated employee login account will be generated.</p>
+
+    <form method="POST" action="/add-employee">
+        <label for="employee_id">Employee ID</label>
+        <input id="employee_id" name="employee_id" type="text"
+               maxlength="50" placeholder="e.g. EMP007" required>
+
+        <label for="employee_name">Employee Name</label>
+        <input id="employee_name" name="employee_name" type="text"
+               maxlength="120" placeholder="Enter full name" required>
+
+        <label for="department">Department</label>
+        <select id="department" name="department" required>
+            <option value="">Select department</option>
+            <option>Finance</option>
+            <option>Marketing</option>
+            <option>Sales</option>
+            <option>Human Resources</option>
+            <option>Information Technology</option>
+            <option>Operations</option>
+        </select>
+
+        <button type="submit">Add Employee <span>+</span></button>
+    </form>
+</section>
+
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">DIRECTORY</p>
+            <h2>Employee directory</h2>
+            <p class="subtitle">Search and filter employee details registered across business units.</p>
+        </div>
+        <span class="item-count-badge" id="employeeTable_count">Showing <%= employees.length %> employees</span>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="filter-toolbar">
+        <div class="filter-group">
+            <div class="search-input-box">
+                <span class="search-icon-symbol">🔍</span>
+                <input type="text" id="employeeSearch" placeholder="Search by name or employee ID..." oninput="filterEmployees()">
+            </div>
+
+            <select id="employeeDeptFilter" class="filter-select-box" onchange="filterEmployees()">
+                <option value="">All Departments</option>
+                <option>Finance</option>
+                <option>Marketing</option>
+                <option>Sales</option>
+                <option>Human Resources</option>
+                <option>Information Technology</option>
+                <option>Operations</option>
+            </select>
+        </div>
+
+        <button type="button" class="notif-link-btn" onclick="resetEmployeeFilters()">Reset Filters</button>
+    </div>
+
+    <% if (employees && employees.length > 0) { %>
+    <div class="table-wrap">
+        <table id="employeeTable">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th>Date Added</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% employees.forEach(function(employee) { %>
+                <tr data-dept="<%= employee.department %>">
+                    <td><code><%= employee.employee_id %></code></td>
+                    <td><strong><%= employee.employee_name %></strong></td>
+                    <td><%= employee.department %></td>
+                    <td><span class="status-pill active">Active</span></td>
+                    <td><%= employee.created_at_formatted || employee.created_at || '-' %></td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+        <div class="empty-icon">♙</div>
+        <h3>No employees added yet</h3>
+        <p>Add your first employee using the form above.</p>
+    </div>
+    <% } %>
+</section>
+
+<script>
+    function filterEmployees() {
+        const q = (document.getElementById('employeeSearch')?.value || '').toLowerCase().trim();
+        const dept = (document.getElementById('employeeDeptFilter')?.value || '').toLowerCase().trim();
+
+        const rows = document.querySelectorAll('#employeeTable tbody tr');
+        let count = 0;
+
+        rows.forEach(row => {
+            const idText = row.children[0]?.textContent.toLowerCase() || '';
+            const nameText = row.children[1]?.textContent.toLowerCase() || '';
+            const rowDept = (row.getAttribute('data-dept') || '').toLowerCase();
+
+            const matchQ = !q || idText.includes(q) || nameText.includes(q);
+            const matchDept = !dept || rowDept === dept;
+
+            if (matchQ && matchDept) {
+                row.style.display = '';
+                count++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const badge = document.getElementById('employeeTable_count');
+        if (badge) badge.textContent = 'Showing ' + count + ' employee' + (count !== 1 ? 's' : '');
+    }
+
+    function resetEmployeeFilters() {
+        if (document.getElementById('employeeSearch')) document.getElementById('employeeSearch').value = '';
+        if (document.getElementById('employeeDeptFilter')) document.getElementById('employeeDeptFilter').value = '';
+        filterEmployees();
+    }
+</script>
+
+<%- include('partials/footer') %>

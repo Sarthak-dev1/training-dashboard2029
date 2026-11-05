@@ -1,0 +1,190 @@
+<%- include('partials/header') %>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">LEARNING MANAGEMENT</p>
+        <h1>Training Programs</h1>
+        <p class="subtitle">Create and manage employee training programs, courses, and curricula.</p>
+    </div>
+    <div class="user-avatar"><%= (user_id || 'A')[0].toUpperCase() %></div>
+</header>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Total Trainings</span>
+            <span class="stat-icon blue">▤</span>
+        </div>
+        <h2><%= stats.total %></h2>
+        <p>All registered programs</p>
+    </article>
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Active Trainings</span>
+            <span class="stat-icon green">↗</span>
+        </div>
+        <h2><%= stats.active %></h2>
+        <p>Currently running</p>
+    </article>
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Completed / Closed</span>
+            <span class="stat-icon purple">✓</span>
+        </div>
+        <h2><%= stats.completed %></h2>
+        <p>Finished or archived</p>
+    </article>
+</section>
+
+<section class="content-panel">
+    <p class="eyebrow">NEW PROGRAM</p>
+    <h2>Add a training</h2>
+    <p class="subtitle">Training program details and curriculum syllabus are preserved in the system.</p>
+
+    <form method="POST" action="/add-training">
+        <label for="training_name">Training Name</label>
+        <input id="training_name" name="training_name" type="text"
+               maxlength="150" placeholder="e.g. Advanced Financial Modeling" required>
+
+        <label for="department">Department</label>
+        <select id="department" name="department" required>
+            <option value="">Select department</option>
+            <option>Finance</option>
+            <option>Marketing</option>
+            <option>Sales</option>
+            <option>Human Resources</option>
+            <option>Information Technology</option>
+            <option>Operations</option>
+        </select>
+
+        <label for="status">Status</label>
+        <select id="status" name="status" required>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+
+        <button type="submit">Save Training <span>+</span></button>
+    </form>
+</section>
+
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">PROGRAM DIRECTORY</p>
+            <h2>All training programs</h2>
+            <p class="subtitle">Search, filter, and inspect curriculum for your organization's courses.</p>
+        </div>
+        <span class="item-count-badge" id="trainingTable_count">Showing <%= trainings.length %> programs</span>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="filter-toolbar">
+        <div class="filter-group">
+            <div class="search-input-box">
+                <span class="search-icon-symbol">🔍</span>
+                <input type="text" id="trainingSearch" placeholder="Search training by name..." oninput="filterTrainings()">
+            </div>
+
+            <select id="trainingDeptFilter" class="filter-select-box" onchange="filterTrainings()">
+                <option value="">All Departments</option>
+                <option>Finance</option>
+                <option>Marketing</option>
+                <option>Sales</option>
+                <option>Human Resources</option>
+                <option>Information Technology</option>
+                <option>Operations</option>
+            </select>
+
+            <select id="trainingStatusFilter" class="filter-select-box" onchange="filterTrainings()">
+                <option value="">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Completed">Completed</option>
+                <option value="Closed">Closed</option>
+            </select>
+        </div>
+
+        <button type="button" class="notif-link-btn" onclick="resetTrainingFilters()">Reset Filters</button>
+    </div>
+
+    <% if (trainings && trainings.length > 0) { %>
+    <div class="table-wrap">
+        <table id="trainingTable">
+            <thead>
+                <tr>
+                    <th>Training Name</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                    <th style="text-align: right;">Curriculum</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% trainings.forEach(function(training) { %>
+                <tr data-dept="<%= training.department %>" data-status="<%= training.status %>">
+                    <td><strong><%= training.training_name %></strong></td>
+                    <td><%= training.department %></td>
+                    <td>
+                        <span class="status-pill <%= training.status.toLowerCase() %>">
+                            <%= training.status %>
+                        </span>
+                    </td>
+                    <td><%= training.created_at_formatted || training.created_at || '-' %></td>
+                    <td style="text-align: right;">
+                        <button type="button" class="view-all-link" onclick="openCurriculumModal(<%= training.id %>, '<%= training.training_name.replace(/'/g, "\\'") %>', '<%= training.department %>')">
+                            View Syllabus ↗
+                        </button>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+        <div class="empty-icon">▤</div>
+        <h3>No training programs yet</h3>
+        <p>Add your first training using the form above.</p>
+    </div>
+    <% } %>
+</section>
+
+<script>
+    function filterTrainings() {
+        const q = (document.getElementById('trainingSearch')?.value || '').toLowerCase().trim();
+        const dept = (document.getElementById('trainingDeptFilter')?.value || '').toLowerCase().trim();
+        const stat = (document.getElementById('trainingStatusFilter')?.value || '').toLowerCase().trim();
+
+        const rows = document.querySelectorAll('#trainingTable tbody tr');
+        let count = 0;
+
+        rows.forEach(row => {
+            const rowText = row.children[0]?.textContent.toLowerCase() || '';
+            const rowDept = (row.getAttribute('data-dept') || '').toLowerCase();
+            const rowStat = (row.getAttribute('data-status') || '').toLowerCase();
+
+            const matchQ = !q || rowText.includes(q);
+            const matchDept = !dept || rowDept === dept;
+            const matchStat = !stat || rowStat === stat;
+
+            if (matchQ && matchDept && matchStat) {
+                row.style.display = '';
+                count++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const badge = document.getElementById('trainingTable_count');
+        if (badge) badge.textContent = 'Showing ' + count + ' program' + (count !== 1 ? 's' : '');
+    }
+
+    function resetTrainingFilters() {
+        if (document.getElementById('trainingSearch')) document.getElementById('trainingSearch').value = '';
+        if (document.getElementById('trainingDeptFilter')) document.getElementById('trainingDeptFilter').value = '';
+        if (document.getElementById('trainingStatusFilter')) document.getElementById('trainingStatusFilter').value = '';
+        filterTrainings();
+    }
+</script>
+
+<%- include('partials/footer') %>

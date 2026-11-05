@@ -1,0 +1,248 @@
+<%- include('partials/header') %>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">QUALITY & LEARNING METRICS</p>
+        <h1>Training Feedback</h1>
+        <p class="subtitle">Collect ratings and suggestions to measure instructor effectiveness and course quality.</p>
+    </div>
+    <div class="user-avatar"><%= (user_id || 'A')[0].toUpperCase() %></div>
+</header>
+
+<!-- EXECUTIVE RATING OVERVIEW SCORECARD -->
+<section class="feedback-score-grid">
+    <div class="score-big-box">
+        <div class="score-number"><%= typeof avg_rating !== 'undefined' ? avg_rating : '4.8' %></div>
+        <div class="score-stars">★★★★★</div>
+        <div class="score-total-reviews">Based on <strong><%= feedback_records.length %></strong> response<%= feedback_records.length !== 1 ? 's' : '' %></div>
+    </div>
+
+    <div>
+        <h4 style="margin: 0 0 10px; font-size: 14px;">Rating Distribution</h4>
+        <% 
+            const totalFb = feedback_records.length || 1;
+            const r5 = feedback_records.filter(f => f.rating === 5).length;
+            const r4 = feedback_records.filter(f => f.rating === 4).length;
+            const r3 = feedback_records.filter(f => f.rating === 3).length;
+            const r2 = feedback_records.filter(f => f.rating === 2).length;
+            const r1 = feedback_records.filter(f => f.rating === 1).length;
+        %>
+
+        <div class="rating-bar-row">
+            <span style="width: 50px;">5 Star</span>
+            <div class="rating-bar-track"><div class="rating-bar-fill" style="width: <%= Math.round((r5/totalFb)*100) %>%;"></div></div>
+            <span style="width: 35px; text-align: right;"><%= r5 %></span>
+        </div>
+        <div class="rating-bar-row">
+            <span style="width: 50px;">4 Star</span>
+            <div class="rating-bar-track"><div class="rating-bar-fill" style="width: <%= Math.round((r4/totalFb)*100) %>%;"></div></div>
+            <span style="width: 35px; text-align: right;"><%= r4 %></span>
+        </div>
+        <div class="rating-bar-row">
+            <span style="width: 50px;">3 Star</span>
+            <div class="rating-bar-track"><div class="rating-bar-fill" style="width: <%= Math.round((r3/totalFb)*100) %>%;"></div></div>
+            <span style="width: 35px; text-align: right;"><%= r3 %></span>
+        </div>
+        <div class="rating-bar-row">
+            <span style="width: 50px;">2 Star</span>
+            <div class="rating-bar-track"><div class="rating-bar-fill" style="width: <%= Math.round((r2/totalFb)*100) %>%;"></div></div>
+            <span style="width: 35px; text-align: right;"><%= r2 %></span>
+        </div>
+        <div class="rating-bar-row">
+            <span style="width: 50px;">1 Star</span>
+            <div class="rating-bar-track"><div class="rating-bar-fill" style="width: <%= Math.round((r1/totalFb)*100) %>%;"></div></div>
+            <span style="width: 35px; text-align: right;"><%= r1 %></span>
+        </div>
+    </div>
+</section>
+
+<section class="content-panel">
+    <p class="eyebrow">SHARE YOUR EXPERIENCE</p>
+    <h2>Submit Feedback</h2>
+    <p class="subtitle">
+        Select a session you attended, rate the training, and share your suggestions. Only enrolled attendees may submit.
+    </p>
+
+    <form action="/add-feedback" method="POST" class="data-form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="broadcast_id">Training Session</label>
+                <select id="broadcast_id" name="broadcast_id" required>
+                    <option value="">Select a training session</option>
+                    <% if (feedback_options) { %>
+                        <% feedback_options.forEach(function(item) { %>
+                        <option value="<%= item.id %>">
+                            <%= item.training_name %> — <%= item.start_date_formatted || item.start_date %>
+                            (<%= item.trainer_name %>)
+                        </option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="employee_id">Employee</label>
+                <select id="employee_id" name="employee_id" required>
+                    <option value="">Select an enrolled employee</option>
+                    <% if (employee_options) { %>
+                        <% employee_options.forEach(function(employee) { %>
+                        <option value="<%= employee.id %>">
+                            <%= employee.employee_name %> (<%= employee.employee_id %>)
+                        </option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="rating">Rating</label>
+                <select id="rating" name="rating" required>
+                    <option value="">Choose a rating</option>
+                    <option value="5" selected>5 - Excellent (★★★★★)</option>
+                    <option value="4">4 - Very Good (★★★★☆)</option>
+                    <option value="3">3 - Good (★★★☆☆)</option>
+                    <option value="2">2 - Needs Improvement (★★☆☆☆)</option>
+                    <option value="1">1 - Poor (★☆☆☆☆)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="comments">Comments and Suggestions</label>
+            <textarea
+                id="comments"
+                name="comments"
+                rows="4"
+                maxlength="2000"
+                placeholder="What went well? How can we make future sessions even more impactful?"
+            ></textarea>
+        </div>
+
+        <div class="form-actions">
+            <button
+                type="submit"
+                class="action-button"
+                <%= (!feedback_options || feedback_options.length === 0 || !employee_options || employee_options.length === 0) ? 'disabled' : '' %>
+            >
+                Submit Feedback <span>✓</span>
+            </button>
+        </div>
+
+        <% if (!feedback_options || feedback_options.length === 0) { %>
+        <p class="field-hint">
+            No training sessions are available yet. Schedule a session in Broadcast Training first.
+        </p>
+        <% } %>
+    </form>
+</section>
+
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">FEEDBACK RECORDS</p>
+            <h2>Submitted Feedback</h2>
+            <p class="subtitle">Evaluations and qualitative responses submitted by employees.</p>
+        </div>
+        <span class="item-count-badge" id="feedbackTable_count">Showing <%= feedback_records.length %> records</span>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="filter-toolbar">
+        <div class="filter-group">
+            <div class="search-input-box">
+                <span class="search-icon-symbol">🔍</span>
+                <input type="text" id="feedbackSearch" placeholder="Search comments, training, or names..." oninput="filterFeedback()">
+            </div>
+
+            <select id="ratingFilter" class="filter-select-box" onchange="filterFeedback()">
+                <option value="">All Ratings</option>
+                <option value="5">5 Stars only</option>
+                <option value="4">4 Stars only</option>
+                <option value="3">3 Stars only</option>
+                <option value="2">2 Stars or below</option>
+            </select>
+        </div>
+
+        <button type="button" class="notif-link-btn" onclick="resetFeedbackFilters()">Reset</button>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table" id="feedbackTable">
+            <thead>
+                <tr>
+                    <th>Training Program</th>
+                    <th>Employee</th>
+                    <th>Lead Trainer</th>
+                    <th>Rating Score</th>
+                    <th>Comments & Observations</th>
+                    <th>Submitted Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (feedback_records && feedback_records.length > 0) { %>
+                    <% feedback_records.forEach(function(item) { %>
+                    <tr data-rating="<%= item.rating %>">
+                        <td><strong><%= item.training_name %></strong></td>
+                        <td><%= item.employee_name %></td>
+                        <td><%= item.trainer_name %></td>
+                        <td>
+                            <span class="status-pill <%= item.rating >= 4 ? 'active' : (item.rating === 3 ? 'inactive' : 'closed') %>">
+                                <%= '★'.repeat(item.rating) + '☆'.repeat(5 - item.rating) %> <%= item.rating %>.0
+                            </span>
+                        </td>
+                        <td><%= item.comments || '—' %></td>
+                        <td><%= item.created_at_formatted || item.created_at || '-' %></td>
+                    </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr class="empty-row">
+                        <td colspan="6" class="empty-state">
+                            No feedback submitted yet.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script>
+    function filterFeedback() {
+        const q = (document.getElementById('feedbackSearch')?.value || '').toLowerCase().trim();
+        const rFilter = document.getElementById('ratingFilter')?.value || '';
+
+        const rows = document.querySelectorAll('#feedbackTable tbody tr');
+        let count = 0;
+
+        rows.forEach(row => {
+            if (row.classList.contains('empty-row')) return;
+            const text = row.textContent.toLowerCase();
+            const rating = row.getAttribute('data-rating') || '';
+
+            const matchQ = !q || text.includes(q);
+            let matchR = true;
+            if (rFilter === '5') matchR = rating === '5';
+            else if (rFilter === '4') matchR = rating === '4';
+            else if (rFilter === '3') matchR = rating === '3';
+            else if (rFilter === '2') matchR = parseInt(rating) <= 2;
+
+            if (matchQ && matchR) {
+                row.style.display = '';
+                count++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const badge = document.getElementById('feedbackTable_count');
+        if (badge) badge.textContent = 'Showing ' + count + ' record' + (count !== 1 ? 's' : '');
+    }
+
+    function resetFeedbackFilters() {
+        if (document.getElementById('feedbackSearch')) document.getElementById('feedbackSearch').value = '';
+        if (document.getElementById('ratingFilter')) document.getElementById('ratingFilter').value = '';
+        filterFeedback();
+    }
+</script>
+
+<%- include('partials/footer') %>

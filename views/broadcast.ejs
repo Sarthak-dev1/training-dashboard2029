@@ -1,0 +1,263 @@
+<%- include('partials/header') %>
+
+<header class="topbar">
+    <div>
+        <p class="eyebrow">LEARNING & DELIVERY</p>
+        <h1>Broadcast Training</h1>
+        <p class="subtitle">Schedule training sessions, assign employees, and monitor the corporate learning calendar.</p>
+    </div>
+    <div class="user-avatar"><%= (user_id || 'A')[0].toUpperCase() %></div>
+</header>
+
+<section class="content-panel">
+    <p class="eyebrow">NEW SESSION</p>
+    <h2>Schedule a Training</h2>
+    <p class="subtitle">Complete the details below to schedule an instructor-led session and enroll employees.</p>
+
+    <form action="/add-broadcast" method="POST" class="data-form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="training_id">Training Program</label>
+                <select id="training_id" name="training_id" required>
+                    <option value="">Select a training</option>
+                    <% if (training_options) { %>
+                        <% training_options.forEach(function(training) { %>
+                            <option value="<%= training.id %>">
+                                <%= training.training_name %> — <%= training.department %>
+                            </option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="trainer_id">Trainer</label>
+                <select id="trainer_id" name="trainer_id" required>
+                    <option value="">Select a trainer</option>
+                    <% if (trainer_options) { %>
+                        <% trainer_options.forEach(function(trainer) { %>
+                            <option value="<%= trainer.id %>">
+                                <%= trainer.trainer_name %><%= trainer.specialization ? ' — ' + trainer.specialization : '' %>
+                            </option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="start_date">Start Date</label>
+                <input type="date" id="start_date" name="start_date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="end_date">End Date</label>
+                <input type="date" id="end_date" name="end_date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="duration">Duration</label>
+                <input
+                    type="text"
+                    id="duration"
+                    name="duration"
+                    maxlength="50"
+                    placeholder="e.g. 2 weeks (30 hours)"
+                    required
+                >
+            </div>
+        </div>
+
+        <div class="form-group employee-selection">
+            <label>Enroll Employees</label>
+
+            <% if (employee_options && employee_options.length > 0) { %>
+                <div class="employee-checklist">
+                    <% employee_options.forEach(function(employee) { %>
+                        <label class="employee-option">
+                            <input
+                                type="checkbox"
+                                name="employee_ids"
+                                value="<%= employee.id %>"
+                            >
+                            <span>
+                                <strong><%= employee.employee_name %></strong>
+                                <small>
+                                    <%= employee.employee_id %> · <%= employee.department %>
+                                </small>
+                            </span>
+                        </label>
+                    <% }); %>
+                </div>
+                <p class="field-hint">Select one or more employees to enroll in this session.</p>
+            <% } else { %>
+                <p class="empty-state">
+                    No employees found. Add employees in the Employees section first.
+                </p>
+            <% } %>
+        </div>
+
+        <div class="form-actions">
+            <button
+                type="submit"
+                class="action-button"
+                <%= (!training_options || training_options.length === 0 || !trainer_options || trainer_options.length === 0 || !employee_options || employee_options.length === 0) ? 'disabled' : '' %>
+            >
+                Schedule Training Session <span>→</span>
+            </button>
+        </div>
+    </form>
+</section>
+
+<section class="content-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">SCHEDULED SESSIONS</p>
+            <h2>Broadcast History & Calendar</h2>
+            <p class="subtitle">Monitor active and scheduled learning sessions across departments.</p>
+        </div>
+
+        <!-- View Switcher -->
+        <div class="view-toggle-wrap">
+            <button type="button" class="toggle-view-btn active" id="btnViewTable" onclick="setBroadcastView('table')">▦ Table View</button>
+            <button type="button" class="toggle-view-btn" id="btnViewCalendar" onclick="setBroadcastView('calendar')">🗓 Calendar View</button>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="filter-toolbar">
+        <div class="filter-group">
+            <div class="search-input-box">
+                <span class="search-icon-symbol">🔍</span>
+                <input type="text" id="broadcastSearch" placeholder="Search by training, department, or trainer..." oninput="filterBroadcasts()">
+            </div>
+        </div>
+        <span class="item-count-badge" id="broadcastCountBadge">Showing <%= broadcasts.length %> sessions</span>
+    </div>
+
+    <!-- 1. Table View -->
+    <div class="table-wrap" id="broadcastTableView">
+        <table class="data-table" id="broadcastTable">
+            <thead>
+                <tr>
+                    <th>Training Program</th>
+                    <th>Department</th>
+                    <th>Lead Trainer</th>
+                    <th>Scheduled Dates</th>
+                    <th>Duration</th>
+                    <th>Enrolled</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (broadcasts && broadcasts.length > 0) { %>
+                    <% broadcasts.forEach(function(broadcast) { %>
+                    <tr>
+                        <td><strong><%= broadcast.training_name %></strong></td>
+                        <td><%= broadcast.department %></td>
+                        <td><%= broadcast.trainer_name %></td>
+                        <td>
+                            <%= broadcast.start_date_formatted || broadcast.start_date %>
+                            –
+                            <%= broadcast.end_date_formatted || broadcast.end_date %>
+                        </td>
+                        <td><span class="status-pill active"><%= broadcast.duration %></span></td>
+                        <td><strong><%= broadcast.employee_count %></strong> employee(s)</td>
+                    </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr class="empty-row">
+                        <td colspan="6" class="empty-state">
+                            No training sessions scheduled yet. Use the form above to schedule your first session.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 2. Calendar / Card View -->
+    <div class="schedule-card-grid" id="broadcastCalendarView" style="display: none;">
+        <% if (broadcasts && broadcasts.length > 0) { %>
+            <% broadcasts.forEach(function(broadcast) { %>
+            <div class="session-schedule-card">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                        <span class="dept-tag"><%= broadcast.department %></span>
+                        <span class="status-pill active">Scheduled</span>
+                    </div>
+                    <h3 style="font-size:16px; margin:0 0 8px;"><%= broadcast.training_name %></h3>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:12px; color:var(--cool-steel);">
+                        <span>👤 Trainer: <strong><%= broadcast.trainer_name %></strong></span>
+                    </div>
+                    <div style="padding:10px 12px; background:var(--soft-bg); border-radius:8px; font-size:12px; margin-bottom:14px;">
+                        <div>🗓 <%= broadcast.start_date_formatted || broadcast.start_date %> to <%= broadcast.end_date_formatted || broadcast.end_date %></div>
+                        <div style="color:var(--cool-steel); margin-top:4px;">⏱ <%= broadcast.duration %></div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--steel-border); padding-top:12px; font-size:12px;">
+                    <span style="color:var(--cool-steel);">👥 <%= broadcast.employee_count %> Enrolled</span>
+                    <a href="/feedback" class="view-all-link" style="font-size:11px;">Feedback & Ratings →</a>
+                </div>
+            </div>
+            <% }); %>
+        <% } else { %>
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <h3>No sessions scheduled</h3>
+                <p>Use the form above to schedule a training session.</p>
+            </div>
+        <% } %>
+    </div>
+</section>
+
+<script>
+    function setBroadcastView(view) {
+        const tableView = document.getElementById('broadcastTableView');
+        const calView = document.getElementById('broadcastCalendarView');
+        const btnTable = document.getElementById('btnViewTable');
+        const btnCal = document.getElementById('btnViewCalendar');
+
+        if (view === 'calendar') {
+            if (tableView) tableView.style.display = 'none';
+            if (calView) calView.style.display = 'grid';
+            btnCal?.classList.add('active');
+            btnTable?.classList.remove('active');
+        } else {
+            if (tableView) tableView.style.display = 'block';
+            if (calView) calView.style.display = 'none';
+            btnTable?.classList.add('active');
+            btnCal?.classList.remove('active');
+        }
+    }
+
+    function filterBroadcasts() {
+        const q = (document.getElementById('broadcastSearch')?.value || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('#broadcastTable tbody tr');
+        let count = 0;
+
+        rows.forEach(row => {
+            if (row.classList.contains('empty-row')) return;
+            const text = row.textContent.toLowerCase();
+            if (!q || text.includes(q)) {
+                row.style.display = '';
+                count++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Also filter cards
+        const cards = document.querySelectorAll('.session-schedule-card');
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            if (!q || text.includes(q)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const badge = document.getElementById('broadcastCountBadge');
+        if (badge) badge.textContent = 'Showing ' + count + ' session' + (count !== 1 ? 's' : '');
+    }
+</script>
+
+<%- include('partials/footer') %>
